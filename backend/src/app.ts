@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { errorHandler } from './errors/errorHandler.js';
 import memberRoutes from './routes/memberRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
+import depositRoutes from './routes/depositRoutes.js';
 
 export const prisma = new PrismaClient();
 
@@ -26,6 +27,7 @@ export function createApp(): express.Application {
 
   app.use('/members', memberRoutes);
   app.use('/expenses', expenseRoutes);
+  app.use('/deposits', depositRoutes);
 
   app.use(errorHandler);
 

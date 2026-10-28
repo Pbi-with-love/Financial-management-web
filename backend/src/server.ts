@@ -1,32 +1,13 @@
-import dotenv from "dotenv";
-import path from "path";
+import dotenv from 'dotenv';
+import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import express from "express";
-import cors from "cors";
-import { PrismaClient } from "@prisma/client";
+import { config } from './config.js';
+import { createApp } from './app.js';
 
-const prisma = new PrismaClient();
-const app = express();
-const PORT = process.env.PORT || 3001;
+const app = createApp();
 
-app.use(cors());
-app.use(express.json());
-
-// Health check — proves the database connection works
-app.get("/health", async (_req, res) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: "ok", database: "connected" });
-  } catch (err) {
-    console.error("Database health check failed:", err);
-    res.status(500).json({ status: "error", database: "disconnected" });
-  }
+app.listen(config.port, () => {
+  console.log(`Server running on port ${config.port}`);
 });
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-export { app, prisma };

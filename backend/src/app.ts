@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import { errorHandler } from './errors/errorHandler.js';
+import memberRoutes from './routes/memberRoutes.js';
 
 export const prisma = new PrismaClient();
 
@@ -21,6 +22,8 @@ export function createApp(): express.Application {
       res.status(500).json({ status: 'error', database: 'disconnected' });
     }
   });
+
+  app.use('/members', memberRoutes);
 
   app.use(errorHandler);
 

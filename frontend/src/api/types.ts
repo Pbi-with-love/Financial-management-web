@@ -35,6 +35,9 @@ export interface Expense {
   voidedAt: string | null;
   createdAt: string;
   items: Item[];
+  replacesExpenseId?: string | null;
+  replacedByExpenseId?: string | null;
+  replacedExpense?: Expense | null;
 }
 
 export interface Deposit {

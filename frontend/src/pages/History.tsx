@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useExpenses, useDeposits, useMembers } from '../api/hooks'
+import { useExpenses, useDeposits, useMembers, useVoidExpense } from '../api/hooks'
 import { formatCents } from '../lib/format'
 import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
 import type { Expense, Deposit } from '../api/types'
 
 type HistoryEntry =
@@ -16,6 +17,7 @@ function ExpenseRow({
   memberMap: Map<string, string>
 }) {
   const [expanded, setExpanded] = useState(false)
+  const voidExpense = useVoidExpense()
 
   return (
     <div>
@@ -81,6 +83,27 @@ function ExpenseRow({
               </div>
             )
           })}
+          {!expense.voided && (
+            <div className="flex justify-end mt-1">
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={voidExpense.isPending}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (window.confirm('Are you sure you want to void this expense?')) {
+                    voidExpense.mutate(expense.id, {
+                      onError: (err) => {
+                        alert(err instanceof Error ? err.message : 'Failed to void expense.')
+                      },
+                    })
+                  }
+                }}
+              >
+                {voidExpense.isPending ? 'Voiding...' : 'Void Expense'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

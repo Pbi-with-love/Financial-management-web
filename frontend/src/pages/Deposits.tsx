@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useDeposits, useCreateDeposit, useMembers } from '@/api/hooks'
+import { useDeposits, useCreateDeposit, useMembers, useVoidDeposit } from '@/api/hooks'
 import { formatCents } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ export default function Deposits() {
   const { data: deposits, isLoading: depositsLoading, isError: depositsError } = useDeposits()
   const { data: members } = useMembers()
   const createDeposit = useCreateDeposit()
+  const voidDeposit = useVoidDeposit()
 
   const activeMembers = members?.filter((m) => m.active) ?? []
 
@@ -187,6 +188,21 @@ export default function Deposits() {
                 </span>
                 {deposit.voided && (
                   <Badge variant="destructive" className="text-xs">Voided</Badge>
+                )}
+                {!deposit.voided && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    disabled={voidDeposit.isPending}
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to void this deposit?')) {
+                        voidDeposit.mutate(deposit.id)
+                      }
+                    }}
+                  >
+                    {voidDeposit.isPending ? 'Voiding...' : 'Void'}
+                  </Button>
                 )}
               </div>
             </div>

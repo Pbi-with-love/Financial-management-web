@@ -1,8 +1,4 @@
-import dotenv from 'dotenv';
-import path from 'path';
-
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
+import 'dotenv/config';
 import { config } from './config.js';
 import { createApp } from './app.js';
 

@@ -1,0 +1,34 @@
+- generic [ref=f6e3]:
+  - complementary [ref=f6e4]:
+    - generic [ref=f6e5]: Finance
+    - navigation [ref=f6e7]:
+      - link "Dashboard" [ref=f6e8] [cursor=pointer]:
+        - /url: /
+      - link "New Expense" [ref=f6e14] [cursor=pointer]:
+        - /url: /expenses/new
+      - link "History" [ref=f6e17] [cursor=pointer]:
+        - /url: /history
+      - link "Deposits" [ref=f6e21] [cursor=pointer]:
+        - /url: /deposits
+  - main [ref=f6e25]:
+    - generic [ref=f6e26]:
+      - heading "Deposits" [level=1] [ref=f6e27]
+      - generic [ref=f6e29]:
+        - heading "New Deposit" [level=2] [ref=f6e30]
+        - generic [ref=f6e32]:
+          - generic [ref=f6e33]:
+            - generic [ref=f6e34]: Member
+            - combobox "Member" [ref=f6e35]:
+              - option "Select member…" [disabled] [selected]
+          - generic [ref=f6e36]:
+            - generic [ref=f6e37]: Amount (€)
+            - spinbutton "Amount (€)" [ref=f6e38]
+          - generic [ref=f6e39]:
+            - generic [ref=f6e40]: Date
+            - textbox "Date" [ref=f6e41]: 2026-10-28
+          - generic [ref=f6e42]:
+            - generic [ref=f6e43]: Note (optional)
+            - textbox "Note (optional)" [ref=f6e44]:
+              - /placeholder: Optional note
+          - button "Add Deposit" [ref=f6e46]
+      - paragraph [ref=f6e47]: Loading deposits…

@@ -1,0 +1,14 @@
+- generic [ref=f5e3]:
+  - complementary [ref=f5e4]:
+    - generic [ref=f5e5]: Finance
+    - navigation [ref=f5e7]:
+      - link "Dashboard" [ref=f5e8] [cursor=pointer]:
+        - /url: /
+      - link "New Expense" [ref=f5e14] [cursor=pointer]:
+        - /url: /expenses/new
+      - link "History" [ref=f5e17] [cursor=pointer]:
+        - /url: /history
+      - link "Deposits" [ref=f5e21] [cursor=pointer]:
+        - /url: /deposits
+  - main [ref=f5e25]:
+    - heading "History" [level=1] [ref=f5e27]

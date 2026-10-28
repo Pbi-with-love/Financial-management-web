@@ -1,0 +1,49 @@
+- generic [ref=f4e3]:
+  - complementary [ref=f4e4]:
+    - generic [ref=f4e5]: Finance
+    - navigation [ref=f4e7]:
+      - link "Dashboard" [ref=f4e8] [cursor=pointer]:
+        - /url: /
+      - link "New Expense" [ref=f4e14] [cursor=pointer]:
+        - /url: /expenses/new
+      - link "History" [ref=f4e17] [cursor=pointer]:
+        - /url: /history
+      - link "Deposits" [ref=f4e21] [cursor=pointer]:
+        - /url: /deposits
+  - main [ref=f4e25]:
+    - generic [ref=f4e26]:
+      - heading "New Expense" [level=1] [ref=f4e27]
+      - generic [ref=f4e28]:
+        - generic [ref=f4e30]:
+          - generic [ref=f4e31]:
+            - generic [ref=f4e32]: Title *
+            - textbox "e.g. Dinner at Luigi's" [ref=f4e33]
+          - generic [ref=f4e34]:
+            - generic [ref=f4e35]: Date *
+            - textbox [ref=f4e36]: 2026-10-28
+          - generic [ref=f4e37]:
+            - generic [ref=f4e38]: Note
+            - textbox "Optional note" [ref=f4e39]
+        - generic [ref=f4e40]:
+          - heading "Items" [level=2] [ref=f4e41]
+          - generic [ref=f4e44]:
+            - generic [ref=f4e45]:
+              - generic [ref=f4e46]: Item 1
+              - button "Remove" [disabled]
+            - generic [ref=f4e47]:
+              - generic [ref=f4e48]: Description *
+              - textbox "e.g. Pasta" [ref=f4e49]
+            - generic [ref=f4e50]:
+              - generic [ref=f4e51]: Amount (€)
+              - spinbutton "0.00" [ref=f4e52]
+            - generic [ref=f4e53]:
+              - generic [ref=f4e54]: Category
+              - textbox "e.g. Food" [ref=f4e55]
+            - generic [ref=f4e56]:
+              - generic [ref=f4e57]: Participants *
+              - paragraph [ref=f4e58]: No active members found.
+          - button "+ Add item" [ref=f4e59]
+        - generic [ref=f4e60]:
+          - generic [ref=f4e61]: Total
+          - generic [ref=f4e62]: €0.00
+        - button "Create Expense" [ref=f4e64]

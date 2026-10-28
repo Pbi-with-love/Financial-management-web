@@ -1,0 +1,14 @@
+- generic [ref=f8e3]:
+  - complementary [ref=f8e4]:
+    - generic [ref=f8e5]: Finance
+    - navigation [ref=f8e7]:
+      - link "Dashboard" [ref=f8e8] [cursor=pointer]:
+        - /url: /
+      - link "New Expense" [ref=f8e14] [cursor=pointer]:
+        - /url: /expenses/new
+      - link "History" [ref=f8e17] [cursor=pointer]:
+        - /url: /history
+      - link "Deposits" [ref=f8e21] [cursor=pointer]:
+        - /url: /deposits
+  - main [ref=f8e25]:
+    - generic [ref=f8e26]: Loading member details…

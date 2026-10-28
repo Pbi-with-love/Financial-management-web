@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { useMember, useDeposits, useExpenses } from '../api/hooks'
+import { useMember, useDeposits, useExpenses, useVoidDeposit } from '../api/hooks'
 import { formatCents } from '../lib/format'
 import { Card, CardContent } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
@@ -34,6 +34,7 @@ export default function MemberDetail() {
 
   const { data: allDeposits, isLoading: depositsLoading } = useDeposits()
   const { data: allExpenses, isLoading: expensesLoading } = useExpenses()
+  const voidDeposit = useVoidDeposit()
 
   const isLoading = memberLoading || depositsLoading || expensesLoading
 
@@ -193,9 +194,26 @@ export default function MemberDetail() {
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
-                        {formatDate(deposit.date)}
-                      </span>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {formatDate(deposit.date)}
+                        </span>
+                        {!deposit.voided && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            disabled={voidDeposit.isPending}
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to void this deposit?')) {
+                                voidDeposit.mutate(deposit.id)
+                              }
+                            }}
+                          >
+                            {voidDeposit.isPending ? 'Voiding...' : 'Void'}
+                          </Button>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>

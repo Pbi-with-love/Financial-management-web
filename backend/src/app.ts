@@ -14,7 +14,12 @@ export function createApp(): express.Application {
   app.use(cors());
   app.use(express.json());
 
-  // Health check — proves the database connection works
+  // Root
+  app.get('/', (_req, res) => {
+    res.json({ name: 'Finance Management API', version: '1.0.0' });
+  });
+
+  // Health check
   app.get('/health', async (_req, res) => {
     try {
       await prisma.$queryRaw`SELECT 1`;

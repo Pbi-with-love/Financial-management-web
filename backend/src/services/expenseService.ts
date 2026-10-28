@@ -1,12 +1,12 @@
 import { prisma } from '../app.js';
 import { AppError } from '../errors/AppError.js';
 import { splitEvenly } from '../domain/split.js';
-import { expenseRepository } from '../repositories/expenseRepository.js';
+import { expenseRepository, ExpenseFilters } from '../repositories/expenseRepository.js';
 import { CreateExpenseInput } from '../validation/expense.js';
 
 export const expenseService = {
-  async getAllExpenses(limit?: number) {
-    return expenseRepository.findAll(limit);
+  async getAllExpenses(filters: ExpenseFilters = {}) {
+    return expenseRepository.findAll(filters);
   },
 
   async createExpense(payload: CreateExpenseInput) {

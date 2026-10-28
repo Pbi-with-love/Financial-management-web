@@ -1,11 +1,11 @@
 import { prisma } from '../app.js';
 import { AppError } from '../errors/AppError.js';
-import { depositRepository } from '../repositories/depositRepository.js';
+import { depositRepository, DepositFilters } from '../repositories/depositRepository.js';
 import { CreateDepositInput } from '../validation/deposit.js';
 
 export const depositService = {
-  async getAllDeposits() {
-    return depositRepository.findAll();
+  async getAllDeposits(filters: DepositFilters = {}) {
+    return depositRepository.findAll(filters);
   },
 
   async createDeposit(payload: CreateDepositInput) {

@@ -1,21 +1,75 @@
 import { Request, Response, NextFunction } from 'express';
 import { expenseService } from '../services/expenseService.js';
+import { ExpenseFilters } from '../repositories/expenseRepository.js';
 import { createExpenseSchema } from '../validation/expense.js';
 import { AppError } from '../errors/AppError.js';
+
+/** Safely extract a scalar string from req.query (handles string | string[] | undefined) */
+function queryString(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+  return undefined;
+}
+
+/** Validate ISO date string (YYYY-MM-DD or full ISO-8601). Returns the string or throws AppError. */
+function validateISODate(value: string, paramName: string): string {
+  if (isNaN(Date.parse(value))) {
+    throw new AppError(400, `${paramName} must be a valid ISO date (e.g. 2026-10-01)`);
+  }
+  return value;
+}
 
 export const expenseController = {
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const limitRaw = req.query.limit;
-      let limit: number | undefined;
+      const filters: ExpenseFilters = {};
+
+      // limit
+      const limitRaw = queryString(req.query.limit);
       if (limitRaw !== undefined) {
-        const parsed = parseInt(String(limitRaw), 10);
+        const parsed = parseInt(limitRaw, 10);
         if (isNaN(parsed) || parsed < 1) {
           throw new AppError(400, 'limit must be a positive integer');
         }
-        limit = parsed;
+        filters.limit = parsed;
       }
-      const expenses = await expenseService.getAllExpenses(limit);
+
+      // from / to (ISO date strings)
+      const fromRaw = queryString(req.query.from);
+      if (fromRaw !== undefined) {
+        filters.from = validateISODate(fromRaw, 'from');
+      }
+
+      const toRaw = queryString(req.query.to);
+      if (toRaw !== undefined) {
+        filters.to = validateISODate(toRaw, 'to');
+      }
+
+      // category
+      const categoryRaw = queryString(req.query.category);
+      if (categoryRaw !== undefined) {
+        filters.category = categoryRaw;
+      }
+
+      // memberId
+      const memberIdRaw = queryString(req.query.memberId);
+      if (memberIdRaw !== undefined) {
+        filters.memberId = memberIdRaw;
+      }
+
+      // includeVoided — parse "true"/"false" string
+      const includeVoidedRaw = queryString(req.query.includeVoided);
+      if (includeVoidedRaw !== undefined) {
+        if (includeVoidedRaw === 'true') {
+          filters.includeVoided = true;
+        } else if (includeVoidedRaw === 'false') {
+          filters.includeVoided = false;
+        } else {
+          throw new AppError(400, 'includeVoided must be "true" or "false"');
+        }
+      }
+
+      const expenses = await expenseService.getAllExpenses(filters);
       res.json(expenses);
     } catch (err) {
       next(err);

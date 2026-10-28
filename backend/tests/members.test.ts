@@ -1,28 +1,14 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
 import request from 'supertest';
 import { createApp, prisma } from '../src/app.js';
+import { cleanDatabase } from './helpers/cleanup.js';
 
 const app = createApp();
 
 let createdMemberId: string;
 
-beforeAll(async () => {
-  // Clean up any test data that might exist
-  await prisma.itemShare.deleteMany({});
-  await prisma.item.deleteMany({});
-  await prisma.expense.deleteMany({});
-  await prisma.deposit.deleteMany({});
-  await prisma.member.deleteMany({});
-});
-
-afterAll(async () => {
-  await prisma.itemShare.deleteMany({});
-  await prisma.item.deleteMany({});
-  await prisma.expense.deleteMany({});
-  await prisma.deposit.deleteMany({});
-  await prisma.member.deleteMany({});
-  await prisma.$disconnect();
-});
+beforeAll(async () => { await cleanDatabase(); });
+afterAll(async () => { await cleanDatabase(); await prisma.$disconnect(); });
 
 describe('POST /members', () => {
   it('creates a member and returns 201 with id and name', async () => {
@@ -106,19 +92,26 @@ describe('GET /members/:id', () => {
 });
 
 describe('PATCH /members/:id', () => {
+  let patchMemberId: string;
+
+  beforeAll(async () => {
+    const res = await request(app).post('/members').send({ name: 'PatchTarget' });
+    patchMemberId = res.body.id;
+  });
+
   it('deactivates a member and returns 200', async () => {
     const res = await request(app)
-      .patch(`/members/${createdMemberId}`)
+      .patch(`/members/${patchMemberId}`)
       .send({ active: false });
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('id', createdMemberId);
+    expect(res.body).toHaveProperty('id', patchMemberId);
     expect(res.body).toHaveProperty('active', false);
   });
 
   it('returns 400 for invalid body', async () => {
     const res = await request(app)
-      .patch(`/members/${createdMemberId}`)
+      .patch(`/members/${patchMemberId}`)
       .send({ active: 'yes' });
 
     expect(res.status).toBe(400);

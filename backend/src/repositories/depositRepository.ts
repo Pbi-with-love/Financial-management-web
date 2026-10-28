@@ -7,13 +7,38 @@ export interface CreateDepositData {
   note?: string;
 }
 
+export interface DepositFilters {
+  from?: string;     // ISO date
+  to?: string;       // ISO date
+  memberId?: string; // filter by member
+}
+
 const depositInclude = {
   member: true,
 } as const;
 
 export const depositRepository = {
-  async findAll() {
+  async findAll(filters: DepositFilters = {}) {
+    const { from, to, memberId } = filters;
+
+    // Build the where clause dynamically
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: Record<string, any> = {};
+
+    if (from !== undefined) {
+      where.date = { ...where.date, gte: new Date(from) };
+    }
+
+    if (to !== undefined) {
+      where.date = { ...where.date, lte: new Date(to) };
+    }
+
+    if (memberId !== undefined) {
+      where.memberId = memberId;
+    }
+
     return prisma.deposit.findMany({
+      where,
       include: depositInclude,
       orderBy: { date: 'desc' },
     });

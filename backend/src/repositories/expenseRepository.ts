@@ -13,6 +13,15 @@ export interface CreateExpenseData {
   }>;
 }
 
+export interface ExpenseFilters {
+  limit?: number;
+  from?: string;      // ISO date
+  to?: string;        // ISO date
+  category?: string;  // item category
+  memberId?: string;  // member with a share
+  includeVoided?: boolean; // default false
+}
+
 const expenseInclude = {
   items: {
     include: {
@@ -22,8 +31,52 @@ const expenseInclude = {
 } as const;
 
 export const expenseRepository = {
-  async findAll(limit?: number) {
+  async findAll(filters: ExpenseFilters = {}) {
+    const { limit, from, to, category, memberId, includeVoided = false } = filters;
+
+    // Build the where clause dynamically
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: Record<string, any> = {};
+
+    if (!includeVoided) {
+      where.voided = false;
+      where.replacedByExpenseId = null;
+    }
+
+    if (from !== undefined) {
+      where.date = { ...where.date, gte: new Date(from) };
+    }
+
+    if (to !== undefined) {
+      where.date = { ...where.date, lte: new Date(to) };
+    }
+
+    if (category !== undefined) {
+      where.items = {
+        ...where.items,
+        some: { ...(where.items?.some ?? {}), category: category },
+      };
+    }
+
+    if (memberId !== undefined) {
+      // Merge with any existing items.some clause using AND if category is also set
+      if (where.items?.some) {
+        // Both category and memberId: use AND on items.some conditions
+        where.items = {
+          some: {
+            AND: [
+              { category: category },
+              { itemShares: { some: { memberId: memberId } } },
+            ],
+          },
+        };
+      } else {
+        where.items = { some: { itemShares: { some: { memberId: memberId } } } };
+      }
+    }
+
     return prisma.expense.findMany({
+      where,
       include: expenseInclude,
       orderBy: { date: 'desc' },
       ...(limit !== undefined ? { take: limit } : {}),

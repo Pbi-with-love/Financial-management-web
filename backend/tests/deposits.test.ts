@@ -1,25 +1,12 @@
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp, prisma } from '../src/app.js';
+import { cleanDatabase } from './helpers/cleanup.js';
 
 const app = createApp();
 
-beforeEach(async () => {
-  await prisma.itemShare.deleteMany();
-  await prisma.item.deleteMany();
-  await prisma.expense.deleteMany();
-  await prisma.deposit.deleteMany();
-  await prisma.member.deleteMany();
-});
-
-afterAll(async () => {
-  await prisma.itemShare.deleteMany();
-  await prisma.item.deleteMany();
-  await prisma.expense.deleteMany();
-  await prisma.deposit.deleteMany();
-  await prisma.member.deleteMany();
-  await prisma.$disconnect();
-});
+beforeEach(async () => { await cleanDatabase(); });
+afterAll(async () => { await cleanDatabase(); await prisma.$disconnect(); });
 
 async function createTestMember(name: string, active = true) {
   return prisma.member.create({ data: { name, active } });

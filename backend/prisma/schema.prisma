@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  deposits   Deposit[]
+  itemShares ItemShare[]
+
+  @@map("members")
+}
+
+model Deposit {
+  id         String    @id @default(uuid())
+  memberId   String    @map("member_id")
+  amountCents Int      @map("amount_cents")
+  note       String?
+  date       DateTime  @db.Date
+  voided     Boolean   @default(false)
+  voidedAt   DateTime? @map("voided_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@map("deposits")
+}
+
+model Expense {
+  id        String    @id @default(uuid())
+  title     String
+  date      DateTime  @db.Date
+  note      String?
+  totalCents Int      @map("total_cents")
+  voided    Boolean   @default(false)
+  voidedAt  DateTime? @map("voided_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  items Item[]
+
+  @@map("expenses")
+}
+
+model Item {
+  id          String @id @default(uuid())
+  expenseId   String @map("expense_id")
+  description String
+  amountCents Int    @map("amount_cents")
+  category    String?
+
+  expense    Expense     @relation(fields: [expenseId], references: [id])
+  itemShares ItemShare[]
+
+  @@map("items")
+}
+
+model ItemShare {
+  id          String @id @default(uuid())
+  itemId      String @map("item_id")
+  memberId    String @map("member_id")
+  amountCents Int    @map("amount_cents")
+
+  item   Item   @relation(fields: [itemId], references: [id])
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@unique([itemId, memberId])
+  @@map("item_shares")
+}

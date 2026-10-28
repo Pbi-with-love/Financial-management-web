@@ -1,0 +1,27 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]: Finance
+    - navigation [ref=e6]:
+      - link "Dashboard" [ref=e7] [cursor=pointer]:
+        - /url: /
+      - link "New Expense" [ref=e13] [cursor=pointer]:
+        - /url: /expenses/new
+      - link "History" [ref=e16] [cursor=pointer]:
+        - /url: /history
+      - link "Deposits" [ref=e20] [cursor=pointer]:
+        - /url: /deposits
+  - main [ref=e24]:
+    - generic [ref=e25]:
+      - heading "Dashboard" [level=1] [ref=e26]
+      - generic [ref=e27]: Loading...
+      - heading "Recent Expenses" [level=2] [ref=e28]
+      - generic [ref=e29]: Loading...
+  - navigation "Mobile navigation" [ref=e30]:
+    - link "Dashboard" [ref=e31] [cursor=pointer]:
+      - /url: /
+    - link "New Expense" [ref=e37] [cursor=pointer]:
+      - /url: /expenses/new
+    - link "History" [ref=e40] [cursor=pointer]:
+      - /url: /history
+    - link "Deposits" [ref=e44] [cursor=pointer]:
+      - /url: /deposits

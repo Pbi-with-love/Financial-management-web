@@ -1,0 +1,12 @@
+[     194ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=3467c8f9:15801
+[     334ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/members:0
+[     335ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/expenses?limit=10:0
+[    1343ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/members:0
+[    1356ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/expenses?limit=10:0
+[   30808ms] [ERROR] WebSocket connection to 'ws://localhost:5173/?token=5XyHtHTZgjT9' failed:  @ http://localhost:5173/@vite/client:958
+[   30809ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5173/@vite/client:1089
+[   32937ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=17190abc:15801
+[   33000ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/members:0
+[   33002ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/expenses?limit=10:0
+[   34019ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/members:0
+[   34020ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/expenses?limit=10:0

@@ -57,7 +57,7 @@ export default function Deposits() {
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-6">
       <h1
-        className="text-2xl font-semibold mb-6 font-heading"
+        className="text-2xl font-semibold mb-6"
       >
         Deposits
       </h1>
@@ -65,7 +65,7 @@ export default function Deposits() {
       {/* New Deposit Form */}
       <Card className="mb-8 p-5">
         <CardContent className="p-0">
-          <h2 className="text-base font-medium font-heading mb-4">New Deposit</h2>
+          <h2 className="text-base font-medium mb-4">New Deposit</h2>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Member select */}

@@ -140,7 +140,7 @@ function DepositRow({
         </span>
       </div>
       <div className="ml-4 shrink-0">
-        <span className="font-medium tabular-nums text-emerald-600">
+        <span className="font-medium tabular-nums text-[#2e7d32]">
           +{formatCents(deposit.amountCents)}
         </span>
       </div>
@@ -176,7 +176,7 @@ export default function History() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-6">
-      <h1 className="text-2xl font-semibold font-heading mb-6">History</h1>
+      <h1 className="text-2xl font-semibold mb-6">History</h1>
 
       {isLoading && (
         <div className="flex justify-center py-12">

@@ -118,7 +118,7 @@ export default function MemberDetail() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1
-              className="text-2xl font-semibold font-heading text-foreground"
+              className="text-2xl font-semibold text-foreground"
             >
               {member.name}
             </h1>
@@ -131,8 +131,8 @@ export default function MemberDetail() {
               Balance
             </p>
             <p
-              className={`text-3xl font-bold font-heading tabular-nums ${
-                balancePositive ? 'text-emerald-600' : 'text-red-600'
+              className={`text-3xl font-bold tabular-nums ${
+                balancePositive ? 'text-[#2e7d32]' : 'text-destructive'
               }`}
             >
               {formatCents(member.balanceCents)}

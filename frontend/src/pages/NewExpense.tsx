@@ -148,7 +148,6 @@ export default function NewExpense() {
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-6">
       <h1
         className="text-2xl font-semibold text-foreground mb-6"
-        style={{ fontFamily: 'Lexend, sans-serif' }}
       >
         New Expense
       </h1>
@@ -159,7 +158,7 @@ export default function NewExpense() {
           <CardContent className="p-5 space-y-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
-                Title <span className="text-red-600">*</span>
+                Title <span className="text-destructive">*</span>
               </label>
               <Input
                 className="h-11 rounded-lg"
@@ -169,13 +168,13 @@ export default function NewExpense() {
                 aria-invalid={!!errors.title}
               />
               {errors.title && (
-                <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                <p className="mt-1 text-sm text-destructive">{errors.title}</p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
-                Date <span className="text-red-600">*</span>
+                Date <span className="text-destructive">*</span>
               </label>
               <Input
                 type="date"
@@ -185,7 +184,7 @@ export default function NewExpense() {
                 aria-invalid={!!errors.date}
               />
               {errors.date && (
-                <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+                <p className="mt-1 text-sm text-destructive">{errors.date}</p>
               )}
             </div>
 
@@ -207,7 +206,6 @@ export default function NewExpense() {
         <div>
           <h2
             className="text-lg font-semibold text-foreground mb-3"
-            style={{ fontFamily: 'Lexend, sans-serif' }}
           >
             Items
           </h2>
@@ -228,7 +226,7 @@ export default function NewExpense() {
                         size="sm"
                         onClick={() => removeItem(index)}
                         disabled={items.length <= 1}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-destructive hover:text-red-700 hover:bg-red-50"
                       >
                         Remove
                       </Button>
@@ -236,7 +234,7 @@ export default function NewExpense() {
 
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1.5">
-                        Description <span className="text-red-600">*</span>
+                        Description <span className="text-destructive">*</span>
                       </label>
                       <Input
                         className="h-11 rounded-lg"
@@ -246,7 +244,7 @@ export default function NewExpense() {
                         aria-invalid={!!itemErr.description}
                       />
                       {itemErr.description && (
-                        <p className="mt-1 text-sm text-red-600">{itemErr.description}</p>
+                        <p className="mt-1 text-sm text-destructive">{itemErr.description}</p>
                       )}
                     </div>
 
@@ -279,7 +277,7 @@ export default function NewExpense() {
 
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1.5">
-                        Participants <span className="text-red-600">*</span>
+                        Participants <span className="text-destructive">*</span>
                       </label>
                       {activeMembers.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No active members found.</p>
@@ -300,7 +298,7 @@ export default function NewExpense() {
                         </div>
                       )}
                       {itemErr.participants && (
-                        <p className="mt-1 text-sm text-red-600">{itemErr.participants}</p>
+                        <p className="mt-1 text-sm text-destructive">{itemErr.participants}</p>
                       )}
                     </div>
                   </CardContent>
@@ -323,7 +321,6 @@ export default function NewExpense() {
         <div className="flex items-center justify-between py-3 border-t border-border">
           <span
             className="text-base font-semibold text-foreground"
-            style={{ fontFamily: 'Lexend, sans-serif' }}
           >
             Total
           </span>
@@ -344,7 +341,7 @@ export default function NewExpense() {
           </Button>
 
           {submitError && (
-            <p className="text-sm text-red-600">{submitError}</p>
+            <p className="text-sm text-destructive">{submitError}</p>
           )}
         </div>
       </form>

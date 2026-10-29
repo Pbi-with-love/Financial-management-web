@@ -1,13 +1,86 @@
 import { useState } from 'react'
-import { useExpenses, useDeposits, useMembers, useVoidExpense } from '../api/hooks'
+import { useSearchParams } from 'react-router-dom'
+import { useExpenses, useDeposits, useMembers, useVoidExpense, useExpense } from '../api/hooks'
 import { formatCents } from '../lib/format'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import type { Expense, Deposit } from '../api/types'
 
+// Helper to format a Date as YYYY-MM-DD (local timezone)
+function toDateString(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function defaultFrom(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 30)
+  return toDateString(d)
+}
+
+function defaultTo(): string {
+  return toDateString(new Date())
+}
+
 type HistoryEntry =
   | { kind: 'expense'; data: Expense }
   | { kind: 'deposit'; data: Deposit }
+
+// Sub-component that fetches the previous version on demand
+function PreviousVersion({ expenseId, memberMap }: { expenseId: string; memberMap: Map<string, string> }) {
+  const { data, isLoading } = useExpense(expenseId)
+  const prev = data?.replacedExpense
+
+  if (isLoading) {
+    return (
+      <div className="bg-muted/30 rounded-lg p-4 mt-2 text-sm text-muted-foreground">
+        Loading previous version…
+      </div>
+    )
+  }
+
+  if (!prev) {
+    return (
+      <div className="bg-muted/30 rounded-lg p-4 mt-2 text-sm text-muted-foreground">
+        Previous version not available.
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-muted/30 rounded-lg p-4 mt-2">
+      <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Previous version</p>
+      <div className="flex flex-col gap-2">
+        {prev.items.map((item) => {
+          const participants = item.itemShares
+            .map((s) => memberMap.get(s.memberId) ?? s.memberId)
+            .join(', ')
+          return (
+            <div key={item.id} className="flex justify-between items-start">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm text-muted-foreground line-through">{item.description}</span>
+                {participants && (
+                  <span className="text-xs text-muted-foreground">{participants}</span>
+                )}
+              </div>
+              <span className="tabular-nums text-sm text-muted-foreground line-through ml-4 shrink-0">
+                {formatCents(item.amountCents)}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <div className="mt-2 pt-2 border-t border-border flex justify-between">
+        <span className="text-xs text-muted-foreground">Total (previous)</span>
+        <span className="tabular-nums text-sm text-muted-foreground line-through">
+          {formatCents(prev.totalCents)}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 function ExpenseRow({
   expense,
@@ -17,7 +90,10 @@ function ExpenseRow({
   memberMap: Map<string, string>
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [showPrevious, setShowPrevious] = useState(false)
   const voidExpense = useVoidExpense()
+
+  const isEdited = !!expense.replacesExpenseId
 
   return (
     <div>
@@ -26,7 +102,7 @@ function ExpenseRow({
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
               className={`font-medium text-foreground${expense.voided ? ' line-through' : ''}`}
             >
@@ -34,6 +110,19 @@ function ExpenseRow({
             </span>
             {expense.voided && (
               <Badge variant="destructive">Voided</Badge>
+            )}
+            {isEdited && (
+              <button
+                className="text-xs border border-border rounded px-1.5 py-0.5 text-muted-foreground hover:bg-muted/50 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowPrevious((v) => !v)
+                  if (!expanded) setExpanded(true)
+                }}
+                title="Show previous version"
+              >
+                Edited
+              </button>
             )}
           </div>
           <span className="text-sm text-muted-foreground">
@@ -83,6 +172,14 @@ function ExpenseRow({
               </div>
             )
           })}
+
+          {showPrevious && expense.replacesExpenseId && (
+            <PreviousVersion
+              expenseId={expense.id}
+              memberMap={memberMap}
+            />
+          )}
+
           {!expense.voided && (
             <div className="flex justify-end mt-1">
               <Button
@@ -149,8 +246,40 @@ function DepositRow({
 }
 
 export default function History() {
-  const expensesQuery = useExpenses()
-  const depositsQuery = useDeposits()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const from = searchParams.get('from') ?? defaultFrom()
+  const to = searchParams.get('to') ?? defaultTo()
+  const memberId = searchParams.get('memberId') ?? ''
+  const category = searchParams.get('category') ?? ''
+
+  function setParam(key: string, value: string) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (value) {
+        next.set(key, value)
+      } else {
+        next.delete(key)
+      }
+      return next
+    })
+  }
+
+  const expenseFilters = {
+    from,
+    to,
+    ...(memberId ? { memberId } : {}),
+    ...(category ? { category } : {}),
+  }
+
+  const depositFilters = {
+    from,
+    to,
+    ...(memberId ? { memberId } : {}),
+  }
+
+  const expensesQuery = useExpenses(expenseFilters)
+  const depositsQuery = useDeposits(depositFilters)
   const membersQuery = useMembers()
 
   const isLoading =
@@ -161,6 +290,15 @@ export default function History() {
   const memberMap = new Map<string, string>(
     (membersQuery.data ?? []).map((m) => [m.id, m.name])
   )
+
+  // Derive distinct categories from loaded expenses
+  const categories = Array.from(
+    new Set(
+      (expensesQuery.data ?? []).flatMap((e) =>
+        e.items.map((i) => i.category).filter((c): c is string => !!c)
+      )
+    )
+  ).sort()
 
   const entries: HistoryEntry[] = [
     ...(expensesQuery.data ?? []).map(
@@ -178,6 +316,50 @@ export default function History() {
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-6">
       <h1 className="text-2xl font-semibold mb-6">History</h1>
 
+      {/* Filter bar */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <input
+          type="date"
+          value={from}
+          onChange={(e) => setParam('from', e.target.value)}
+          className="h-9 px-3 border border-border rounded-md text-sm bg-card text-foreground"
+          aria-label="From date"
+        />
+        <input
+          type="date"
+          value={to}
+          onChange={(e) => setParam('to', e.target.value)}
+          className="h-9 px-3 border border-border rounded-md text-sm bg-card text-foreground"
+          aria-label="To date"
+        />
+        <select
+          value={memberId}
+          onChange={(e) => setParam('memberId', e.target.value)}
+          className="h-9 px-3 border border-border rounded-md text-sm bg-card text-foreground"
+          aria-label="Member filter"
+        >
+          <option value="">All members</option>
+          {(membersQuery.data ?? []).map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+        <select
+          value={category}
+          onChange={(e) => setParam('category', e.target.value)}
+          className="h-9 px-3 border border-border rounded-md text-sm bg-card text-foreground"
+          aria-label="Category filter"
+        >
+          <option value="">All categories</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {isLoading && (
         <div className="flex justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -193,7 +375,7 @@ export default function History() {
       {!isLoading && !isError && (
         <>
           {entries.length === 0 && (
-            <p className="text-muted-foreground">No transactions yet.</p>
+            <p className="text-muted-foreground">No transactions found for the selected filters.</p>
           )}
           <div className="divide-y divide-border">
             {entries.map((entry) =>

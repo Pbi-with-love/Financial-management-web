@@ -89,4 +89,16 @@ export const memberRepository = {
   async update(id: string, data: { name?: string; active?: boolean }) {
     return prisma.member.update({ where: { id }, data });
   },
+
+  async delete(id: string) {
+    return prisma.member.delete({ where: { id } });
+  },
+
+  async hasFinancialRecords(id: string): Promise<boolean> {
+    const [deposits, shares] = await Promise.all([
+      prisma.deposit.count({ where: { memberId: id } }),
+      prisma.itemShare.count({ where: { memberId: id } }),
+    ]);
+    return deposits > 0 || shares > 0;
+  },
 };

@@ -7,5 +7,6 @@ router.get('/', memberController.list);
 router.get('/:id', memberController.getOne);
 router.post('/', memberController.create);
 router.patch('/:id', memberController.update);
+router.delete('/:id', memberController.remove);
 
 export default router;

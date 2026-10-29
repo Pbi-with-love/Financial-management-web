@@ -91,8 +91,8 @@ Request flow: `route → controller → service → repository → PostgreSQL`. 
 
 ### Members
 
-- Members are deactivated (`active = false`), never deleted, because history references them.
-- Inactive members are not offered as default participants but keep their balance and history.
+- Members can be hard-deleted via `DELETE /members/:id`, but only if they have no deposits, expenses, or item shares. If they do, the server rejects with 400.
+- Members can also be deactivated (`active = false`) to hide them from participant lists while preserving history.
 - A negative balance is allowed (someone owes the fund), but the UI must show it clearly in red.
 
 ## API conventions

@@ -70,6 +70,21 @@ export function updateMember(id: string, data: { name?: string; active?: boolean
   });
 }
 
+export async function deleteMember(id: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}/members/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    let message = `API error: ${response.status}`;
+    try {
+      const body = (await response.json()) as { error?: string };
+      if (body.error) message = body.error;
+    } catch { /* ignore */ }
+    throw new Error(message);
+  }
+}
+
 export function getExpenses(filters?: ExpenseFilters): Promise<Expense[]> {
   const params = new URLSearchParams();
   if (filters?.limit) params.set('limit', String(filters.limit));

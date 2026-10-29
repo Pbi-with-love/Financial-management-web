@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { useMember, useDeposits, useExpenses, useVoidDeposit, useUpdateMember } from '../api/hooks'
+import { useMember, useDeposits, useExpenses, useVoidDeposit, useUpdateMember, useDeleteMember } from '../api/hooks'
 import { formatCents } from '../lib/format'
 import { Card, CardContent } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
@@ -29,6 +29,7 @@ export default function MemberDetail() {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const updateMemberMutation = useUpdateMember()
+  const deleteMemberMutation = useDeleteMember()
 
   const {
     data: member,
@@ -182,26 +183,26 @@ export default function MemberDetail() {
           </div>
         </div>
 
-        {/* Delete (deactivates under the hood per AGENT.md — never hard-delete) */}
-        {member.active && (
-          <div className="mt-4 pt-4 border-t border-border flex justify-end">
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={updateMemberMutation.isPending}
-              onClick={() => {
-                if (window.confirm(`Delete ${member.name}? Their balance and history will be preserved.`)) {
-                  updateMemberMutation.mutate(
-                    { id: id!, data: { active: false } },
-                    { onSuccess: () => navigate('/') }
-                  )
-                }
-              }}
-            >
-              Delete member
-            </Button>
-          </div>
-        )}
+        {/* Delete member (hard delete — only if no financial records) */}
+        <div className="mt-4 pt-4 border-t border-border flex justify-end">
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={deleteMemberMutation.isPending}
+            onClick={() => {
+              if (window.confirm(`Delete ${member.name}? This cannot be undone.`)) {
+                deleteMemberMutation.mutate(id!, {
+                  onSuccess: () => navigate('/'),
+                  onError: (err) => {
+                    alert(err instanceof Error ? err.message : 'Failed to delete member.')
+                  },
+                })
+              }
+            }}
+          >
+            {deleteMemberMutation.isPending ? 'Deleting…' : 'Delete member'}
+          </Button>
+        </div>
       </Card>
 
       {/* Tabs */}

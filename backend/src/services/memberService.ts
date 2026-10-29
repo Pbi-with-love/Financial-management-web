@@ -25,4 +25,16 @@ export const memberService = {
     }
     return memberRepository.update(id, data);
   },
+
+  async deleteMember(id: string) {
+    const member = await memberRepository.findById(id);
+    if (!member) {
+      throw new AppError(404, 'Member not found');
+    }
+    const hasRecords = await memberRepository.hasFinancialRecords(id);
+    if (hasRecords) {
+      throw new AppError(400, 'Cannot delete member with existing deposits or expenses. Deactivate instead.');
+    }
+    await memberRepository.delete(id);
+  },
 };

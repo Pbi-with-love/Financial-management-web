@@ -14,6 +14,7 @@ import {
   getMembers,
   getRecentExpenses,
   reviseExpense,
+  deleteMember,
   updateMember,
   voidDeposit,
   voidExpense,
@@ -125,6 +126,16 @@ export function useUpdateMember() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.members });
       void queryClient.invalidateQueries({ queryKey: ['members'] });
+    },
+  });
+}
+
+export function useDeleteMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteMember(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.members });
     },
   });
 }

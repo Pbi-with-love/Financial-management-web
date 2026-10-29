@@ -4,7 +4,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
-    // Run test files sequentially to avoid DB conflicts between integration test suites
+    setupFiles: ["tests/setup.ts"],
     fileParallelism: false,
+    testTimeout: 10000,
+    hookTimeout: 10000,
   },
 });

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { expenseService } from '../services/expenseService.js';
 import { ExpenseFilters } from '../repositories/expenseRepository.js';
-import { createExpenseSchema } from '../validation/expense.js';
+import { createExpenseSchema, reviseExpenseSchema } from '../validation/expense.js';
 import { AppError } from '../errors/AppError.js';
 
 /** Safely extract a scalar string from req.query (handles string | string[] | undefined) */
@@ -89,10 +89,36 @@ export const expenseController = {
     }
   },
 
+  async getById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const expense = await expenseService.getExpenseById(id);
+      // Map Prisma relation name to API field name
+      const { replacesExpense, ...rest } = expense as typeof expense & { replacesExpense?: unknown };
+      res.json({ ...rest, replacedExpense: replacesExpense ?? null });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async void(req: Request, res: Response, next: NextFunction) {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const expense = await expenseService.voidExpense(id);
+      res.json(expense);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async revise(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const parsed = reviseExpenseSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError(400, parsed.error.issues.map((e: { message: string }) => e.message).join(', '));
+      }
+      const expense = await expenseService.reviseExpense(id, parsed.data);
       res.json(expense);
     } catch (err) {
       next(err);

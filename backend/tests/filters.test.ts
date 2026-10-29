@@ -8,6 +8,20 @@ import { createApp, prisma } from '../src/app.js';
 const app = createApp();
 
 // ---------------------------------------------------------------------------
+// Cleanup
+// ---------------------------------------------------------------------------
+
+/**
+ * Use a single TRUNCATE ... CASCADE to atomically clear all tables.
+ * Sequential deleteMany() calls can fail on Neon PgBouncer (transaction mode)
+ * because different statements may land on different backend connections that
+ * see inconsistent FK state. TRUNCATE runs as one SQL statement on one connection.
+ */
+async function clean() {
+  await prisma.$executeRaw`TRUNCATE TABLE item_shares, items, expenses, deposits, members CASCADE`;
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -47,22 +61,8 @@ async function createDeposit(memberId: string, amountCents: number, date: string
 // Setup / teardown
 // ---------------------------------------------------------------------------
 
-beforeEach(async () => {
-  await prisma.itemShare.deleteMany();
-  await prisma.item.deleteMany();
-  await prisma.expense.deleteMany();
-  await prisma.deposit.deleteMany();
-  await prisma.member.deleteMany();
-});
-
-afterAll(async () => {
-  await prisma.itemShare.deleteMany();
-  await prisma.item.deleteMany();
-  await prisma.expense.deleteMany();
-  await prisma.deposit.deleteMany();
-  await prisma.member.deleteMany();
-  await prisma.$disconnect();
-});
+beforeEach(async () => { await clean(); });
+afterAll(async () => { await clean(); await prisma.$disconnect(); });
 
 // ---------------------------------------------------------------------------
 // Expense filter tests

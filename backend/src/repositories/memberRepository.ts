@@ -86,7 +86,7 @@ export const memberRepository = {
     return prisma.member.create({ data });
   },
 
-  async update(id: string, data: { active?: boolean }) {
+  async update(id: string, data: { name?: string; active?: boolean }) {
     return prisma.member.update({ where: { id }, data });
   },
 };

@@ -18,7 +18,7 @@ export const memberService = {
     return memberRepository.create({ name });
   },
 
-  async updateMember(id: string, data: { active?: boolean }) {
+  async updateMember(id: string, data: { name?: string; active?: boolean }) {
     const member = await memberRepository.findById(id);
     if (!member) {
       throw new AppError(404, 'Member not found');

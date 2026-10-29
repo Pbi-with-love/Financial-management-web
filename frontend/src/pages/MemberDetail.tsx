@@ -1,6 +1,7 @@
-import { Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { useMember, useDeposits, useExpenses, useVoidDeposit } from '../api/hooks'
+import { useMember, useDeposits, useExpenses, useVoidDeposit, useUpdateMember } from '../api/hooks'
 import { formatCents } from '../lib/format'
 import { Card, CardContent } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
@@ -24,6 +25,10 @@ interface EnrichedItemShare extends ItemShare {
 
 export default function MemberDetail() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+  const updateMemberMutation = useUpdateMember()
 
   const {
     data: member,
@@ -117,11 +122,48 @@ export default function MemberDetail() {
       <Card className="p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1
-              className="text-2xl font-semibold text-foreground"
-            >
-              {member.name}
-            </h1>
+            {editingName ? (
+              <form
+                className="flex items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  const trimmed = nameInput.trim()
+                  if (!trimmed) return
+                  updateMemberMutation.mutate(
+                    { id: id!, data: { name: trimmed } },
+                    { onSuccess: () => setEditingName(false) }
+                  )
+                }}
+              >
+                <input
+                  type="text"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  className="h-9 px-3 border border-border rounded-md text-sm bg-background text-foreground"
+                  autoFocus
+                />
+                <Button size="sm" type="submit" disabled={updateMemberMutation.isPending}>
+                  {updateMemberMutation.isPending ? 'Saving…' : 'Save'}
+                </Button>
+                <Button variant="ghost" size="sm" type="button" onClick={() => setEditingName(false)}>
+                  Cancel
+                </Button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-semibold text-foreground">
+                  {member.name}
+                </h1>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground text-xs"
+                  onClick={() => { setNameInput(member.name); setEditingName(true) }}
+                >
+                  Edit
+                </Button>
+              </div>
+            )}
             {!member.active && (
               <span className="mt-1 text-sm text-muted-foreground">(Inactive)</span>
             )}
@@ -138,6 +180,38 @@ export default function MemberDetail() {
               {formatCents(member.balanceCents)}
             </p>
           </div>
+        </div>
+
+        {/* Deactivate / Reactivate */}
+        <div className="mt-4 pt-4 border-t border-border flex justify-end">
+          {member.active ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={updateMemberMutation.isPending}
+              onClick={() => {
+                if (window.confirm(`Deactivate ${member.name}? They will keep their balance and history but won't appear as a participant option.`)) {
+                  updateMemberMutation.mutate(
+                    { id: id!, data: { active: false } },
+                    { onSuccess: () => navigate('/') }
+                  )
+                }
+              }}
+            >
+              Deactivate member
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={updateMemberMutation.isPending}
+              onClick={() => {
+                updateMemberMutation.mutate({ id: id!, data: { active: true } })
+              }}
+            >
+              Reactivate member
+            </Button>
+          )}
         </div>
       </Card>
 

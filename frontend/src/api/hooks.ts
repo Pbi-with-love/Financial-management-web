@@ -14,6 +14,7 @@ import {
   getMembers,
   getRecentExpenses,
   reviseExpense,
+  updateMember,
   voidDeposit,
   voidExpense,
 } from './client';
@@ -112,6 +113,18 @@ export function useVoidDeposit() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['deposits'] });
       void queryClient.invalidateQueries({ queryKey: queryKeys.members });
+    },
+  });
+}
+
+export function useUpdateMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { name?: string; active?: boolean } }) =>
+      updateMember(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.members });
+      void queryClient.invalidateQueries({ queryKey: ['members'] });
     },
   });
 }

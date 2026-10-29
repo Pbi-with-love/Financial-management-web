@@ -5,5 +5,8 @@ export const createMemberSchema = z.object({
 });
 
 export const updateMemberSchema = z.object({
-  active: z.boolean(),
+  name: z.string().min(1).optional(),
+  active: z.boolean().optional(),
+}).refine(data => data.name !== undefined || data.active !== undefined, {
+  message: 'At least one of name or active must be provided',
 });

@@ -63,6 +63,13 @@ export function createMember(name: string): Promise<MemberWithBalance> {
   });
 }
 
+export function updateMember(id: string, data: { name?: string; active?: boolean }): Promise<MemberWithBalance> {
+  return request<MemberWithBalance>(`/members/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
 export function getExpenses(filters?: ExpenseFilters): Promise<Expense[]> {
   const params = new URLSearchParams();
   if (filters?.limit) params.set('limit', String(filters.limit));

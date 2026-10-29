@@ -6,6 +6,7 @@ import {
 import {
   createDeposit,
   createExpense,
+  createMember,
   getDeposits,
   getExpense,
   getExpenses,
@@ -110,6 +111,16 @@ export function useVoidDeposit() {
     mutationFn: (id: string) => voidDeposit(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['deposits'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.members });
+    },
+  });
+}
+
+export function useCreateMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => createMember(name),
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.members });
     },
   });

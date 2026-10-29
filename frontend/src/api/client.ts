@@ -56,6 +56,13 @@ export function getMember(id: string): Promise<MemberWithBalance> {
   return request<MemberWithBalance>(`/members/${id}`);
 }
 
+export function createMember(name: string): Promise<MemberWithBalance> {
+  return request<MemberWithBalance>('/members', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+}
+
 export function getExpenses(filters?: ExpenseFilters): Promise<Expense[]> {
   const params = new URLSearchParams();
   if (filters?.limit) params.set('limit', String(filters.limit));

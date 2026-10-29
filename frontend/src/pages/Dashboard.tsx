@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useMembers, useRecentExpenses, useReviseExpense } from '@/api'
+import { useMembers, useRecentExpenses, useReviseExpense, useCreateMember } from '@/api'
 import type { Expense, Item } from '@/api'
 import { formatCents } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
@@ -168,6 +168,8 @@ function ExpenseRow({
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [newMemberName, setNewMemberName] = useState('')
+  const createMember = useCreateMember()
   const { data: members, isLoading, isError, refetch } = useMembers()
   const {
     data: recentExpenses,
@@ -251,6 +253,41 @@ export default function Dashboard() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Add member */}
+      {members && (
+        <form
+          className="mt-4 flex gap-2 items-center"
+          onSubmit={(e) => {
+            e.preventDefault()
+            const name = newMemberName.trim()
+            if (!name) return
+            createMember.mutate(name, {
+              onSuccess: () => setNewMemberName(''),
+            })
+          }}
+        >
+          <input
+            type="text"
+            placeholder="New member name"
+            value={newMemberName}
+            onChange={(e) => setNewMemberName(e.target.value)}
+            className="h-9 px-3 border border-border rounded-md text-sm bg-card text-foreground flex-1 max-w-[200px]"
+          />
+          <button
+            type="submit"
+            disabled={createMember.isPending || !newMemberName.trim()}
+            className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {createMember.isPending ? 'Adding…' : 'Add member'}
+          </button>
+          {createMember.isError && (
+            <span className="text-sm text-destructive">
+              {createMember.error instanceof Error ? createMember.error.message : 'Failed'}
+            </span>
+          )}
+        </form>
       )}
 
       {/* Today's expenses */}

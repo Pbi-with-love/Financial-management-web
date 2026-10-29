@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useExpenses, useDeposits, useMembers, useVoidExpense, useExpense } from '../api/hooks'
+import { useExpenses, useDeposits, useMembers, useVoidExpense, useReviseExpense, useExpense } from '../api/hooks'
 import { formatCents } from '../lib/format'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import type { Expense, Deposit } from '../api/types'
+import type { Expense, Deposit, Item } from '../api/types'
 
 // Helper to format a Date as YYYY-MM-DD (local timezone)
 function toDateString(d: Date): string {
@@ -91,9 +91,52 @@ function ExpenseRow({
 }) {
   const [expanded, setExpanded] = useState(false)
   const [showPrevious, setShowPrevious] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [inputValues, setInputValues] = useState<Record<string, string>>({})
   const voidExpense = useVoidExpense()
+  const reviseMutation = useReviseExpense()
 
   const isEdited = !!expense.replacesExpenseId
+
+  function startEdit() {
+    const initial: Record<string, string> = {}
+    for (const item of expense.items) {
+      initial[item.id] = (item.amountCents / 100).toFixed(2)
+    }
+    setInputValues(initial)
+    setEditError(null)
+    setEditing(true)
+    if (!expanded) setExpanded(true)
+  }
+
+  function cancelEdit() {
+    setEditing(false)
+    setEditError(null)
+    setInputValues({})
+  }
+
+  async function handleSave() {
+    setEditError(null)
+    const items = expense.items.map((item: Item) => ({
+      description: item.description,
+      amountCents: Math.round(parseFloat(inputValues[item.id] ?? '0') * 100),
+      category: item.category ?? undefined,
+      participantIds: item.itemShares.map((s) => s.memberId),
+    }))
+    try {
+      await reviseMutation.mutateAsync({ id: expense.id, items })
+      setEditing(false)
+      setInputValues({})
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('409') || msg.toLowerCase().includes('already')) {
+        setEditError('This expense was already edited by someone else.')
+      } else {
+        setEditError(msg)
+      }
+    }
+  }
 
   return (
     <div>
@@ -165,13 +208,30 @@ function ExpenseRow({
                       </span>
                     )}
                   </div>
-                  <span className="tabular-nums text-sm text-foreground ml-4 shrink-0">
-                    {formatCents(item.amountCents)}
-                  </span>
+                  {editing ? (
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={inputValues[item.id] ?? ''}
+                      onChange={(e) =>
+                        setInputValues((prev) => ({ ...prev, [item.id]: e.target.value }))
+                      }
+                      className="h-9 w-24 text-right tabular-nums border border-border rounded-md px-2 text-sm bg-background"
+                    />
+                  ) : (
+                    <span className="tabular-nums text-sm text-foreground ml-4 shrink-0">
+                      {formatCents(item.amountCents)}
+                    </span>
+                  )}
                 </div>
               </div>
             )
           })}
+
+          {editError && (
+            <p className="text-sm text-destructive mt-2">{editError}</p>
+          )}
 
           {showPrevious && expense.replacesExpenseId && (
             <PreviousVersion
@@ -181,24 +241,48 @@ function ExpenseRow({
           )}
 
           {!expense.voided && (
-            <div className="flex justify-end mt-1">
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={voidExpense.isPending}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (window.confirm('Are you sure you want to void this expense?')) {
-                    voidExpense.mutate(expense.id, {
-                      onError: (err) => {
-                        alert(err instanceof Error ? err.message : 'Failed to void expense.')
-                      },
-                    })
-                  }
-                }}
-              >
-                {voidExpense.isPending ? 'Voiding...' : 'Void Expense'}
-              </Button>
+            <div className="flex justify-end gap-2 mt-1">
+              {editing ? (
+                <>
+                  <Button
+                    size="sm"
+                    disabled={reviseMutation.isPending}
+                    onClick={(e) => { e.stopPropagation(); void handleSave() }}
+                  >
+                    {reviseMutation.isPending ? 'Saving…' : 'Save'}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); startEdit() }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={voidExpense.isPending}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (window.confirm('Are you sure you want to void this expense?')) {
+                        voidExpense.mutate(expense.id, {
+                          onError: (err) => {
+                            alert(err instanceof Error ? err.message : 'Failed to void expense.')
+                          },
+                        })
+                      }
+                    }}
+                  >
+                    {voidExpense.isPending ? 'Voiding…' : 'Void'}
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>

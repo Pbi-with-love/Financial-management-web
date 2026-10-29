@@ -182,15 +182,15 @@ export default function MemberDetail() {
           </div>
         </div>
 
-        {/* Deactivate / Reactivate */}
-        <div className="mt-4 pt-4 border-t border-border flex justify-end">
-          {member.active ? (
+        {/* Delete (deactivates under the hood per AGENT.md — never hard-delete) */}
+        {member.active && (
+          <div className="mt-4 pt-4 border-t border-border flex justify-end">
             <Button
               variant="destructive"
               size="sm"
               disabled={updateMemberMutation.isPending}
               onClick={() => {
-                if (window.confirm(`Deactivate ${member.name}? They will keep their balance and history but won't appear as a participant option.`)) {
+                if (window.confirm(`Delete ${member.name}? Their balance and history will be preserved.`)) {
                   updateMemberMutation.mutate(
                     { id: id!, data: { active: false } },
                     { onSuccess: () => navigate('/') }
@@ -198,21 +198,10 @@ export default function MemberDetail() {
                 }
               }}
             >
-              Deactivate member
+              Delete member
             </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={updateMemberMutation.isPending}
-              onClick={() => {
-                updateMemberMutation.mutate({ id: id!, data: { active: true } })
-              }}
-            >
-              Reactivate member
-            </Button>
-          )}
-        </div>
+          </div>
+        )}
       </Card>
 
       {/* Tabs */}

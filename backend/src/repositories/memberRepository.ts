@@ -95,7 +95,12 @@ export const memberRepository = {
   },
 
   async hasItemShares(id: string): Promise<boolean> {
-    const count = await prisma.itemShare.count({ where: { memberId: id } });
+    const count = await prisma.itemShare.count({
+      where: {
+        memberId: id,
+        item: { expense: { voided: false } },
+      },
+    });
     return count > 0;
   },
 };

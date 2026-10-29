@@ -35,8 +35,9 @@ export const memberService = {
     if (hasShares) {
       throw new AppError(400, 'Cannot delete member with existing item shares. Remove their shares first.');
     }
-    // Delete any deposits by this member first (cascade)
+    // Clean up: delete shares on voided expenses + deposits before deleting member
     const { prisma } = await import('../app.js');
+    await prisma.itemShare.deleteMany({ where: { memberId: id } });
     await prisma.deposit.deleteMany({ where: { memberId: id } });
     await memberRepository.delete(id);
   },

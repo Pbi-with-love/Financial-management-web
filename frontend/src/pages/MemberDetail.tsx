@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { useMember, useDeposits, useExpenses, useVoidDeposit, useUpdateMember, useDeleteMember, useUpdateItemShare, useDeleteItemShare } from '../api/hooks'
+import { useMember, useDeposits, useExpenses, useUpdateDeposit, useDeleteDeposit, useUpdateMember, useDeleteMember, useUpdateItemShare, useDeleteItemShare } from '../api/hooks'
 import { formatCents } from '../lib/format'
 import { Card, CardContent } from '../components/ui/card'
-import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import type { Deposit, ItemShare, Item, Expense } from '../api/types'
@@ -119,7 +118,10 @@ export default function MemberDetail() {
 
   const { data: allDeposits, isLoading: depositsLoading } = useDeposits()
   const { data: allExpenses, isLoading: expensesLoading } = useExpenses()
-  const voidDeposit = useVoidDeposit()
+  const updateDepositMutation = useUpdateDeposit()
+  const deleteDepositMutation = useDeleteDeposit()
+  const [editingDepositId, setEditingDepositId] = useState<string | null>(null)
+  const [depositAmountInput, setDepositAmountInput] = useState('')
 
   const isLoading = memberLoading || depositsLoading || expensesLoading
 
@@ -308,39 +310,59 @@ export default function MemberDetail() {
                   {memberDeposits.map((deposit) => (
                     <li
                       key={deposit.id}
-                      className={`flex items-center justify-between gap-4 px-4 py-3 border-b border-border last:border-0 ${
-                        deposit.voided ? 'opacity-60' : ''
-                      }`}
+                      className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border last:border-0"
                     >
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-foreground tabular-nums">
-                            {formatCents(deposit.amountCents)}
-                          </span>
-                          {deposit.voided && <Badge variant="destructive">Voided</Badge>}
-                        </div>
                         {deposit.note && (
                           <span className="text-xs text-muted-foreground truncate">{deposit.note}</span>
                         )}
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-xs text-muted-foreground">
                           {formatDate(deposit.date)}
                         </span>
-                        {!deposit.voided && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            disabled={voidDeposit.isPending}
-                            onClick={() => {
-                              if (window.confirm('Void this deposit?')) {
-                                voidDeposit.mutate(deposit.id)
-                              }
-                            }}
-                          >
-                            Void
-                          </Button>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {editingDepositId === deposit.id ? (
+                          <>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={depositAmountInput}
+                              onChange={(e) => setDepositAmountInput(e.target.value)}
+                              className="h-8 w-20 text-right tabular-nums border border-border rounded-md px-2 text-sm bg-background"
+                              autoFocus
+                            />
+                            <Button size="sm" disabled={updateDepositMutation.isPending}
+                              onClick={() => {
+                                const cents = Math.round(parseFloat(depositAmountInput) * 100)
+                                if (cents > 0) {
+                                  updateDepositMutation.mutate({ id: deposit.id, data: { amountCents: cents } }, {
+                                    onSuccess: () => setEditingDepositId(null),
+                                  })
+                                }
+                              }}
+                            >
+                              {updateDepositMutation.isPending ? '…' : 'Save'}
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setEditingDepositId(null)}>Cancel</Button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-sm font-medium text-foreground tabular-nums">
+                              {formatCents(deposit.amountCents)}
+                            </span>
+                            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground"
+                              onClick={() => { setDepositAmountInput((deposit.amountCents / 100).toFixed(2)); setEditingDepositId(deposit.id) }}
+                            >
+                              Edit
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-xs text-destructive"
+                              disabled={deleteDepositMutation.isPending}
+                              onClick={() => { if (window.confirm('Delete this deposit?')) deleteDepositMutation.mutate(deposit.id) }}
+                            >
+                              Remove
+                            </Button>
+                          </>
                         )}
                       </div>
                     </li>

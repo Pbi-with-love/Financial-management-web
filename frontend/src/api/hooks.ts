@@ -15,10 +15,11 @@ import {
   getRecentExpenses,
   reviseExpense,
   deleteMember,
+  deleteDeposit,
   deleteItemShare,
+  updateDeposit,
   updateItemShare,
   updateMember,
-  voidDeposit,
   voidExpense,
 } from './client';
 import type { DepositFilters, ExpenseFilters } from './client';
@@ -109,10 +110,22 @@ export function useCreateDeposit() {
   });
 }
 
-export function useVoidDeposit() {
+export function useUpdateDeposit() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => voidDeposit(id),
+    mutationFn: ({ id, data }: { id: string; data: { amountCents?: number; date?: string; note?: string } }) =>
+      updateDeposit(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['deposits'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.members });
+    },
+  });
+}
+
+export function useDeleteDeposit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteDeposit(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['deposits'] });
       void queryClient.invalidateQueries({ queryKey: queryKeys.members });

@@ -13,7 +13,6 @@ export const depositService = {
     if (!member) {
       throw new AppError(400, `Member "${payload.memberId}" does not exist`);
     }
-
     return depositRepository.create({
       memberId: payload.memberId,
       amountCents: payload.amountCents,
@@ -22,15 +21,19 @@ export const depositService = {
     });
   },
 
-  async voidDeposit(id: string) {
+  async updateDeposit(id: string, data: { amountCents?: number; date?: string; note?: string }) {
     const deposit = await depositRepository.findById(id);
     if (!deposit) {
       throw new AppError(404, 'Deposit not found');
     }
-    // Idempotent: if already voided, just return it
-    if (deposit.voided) {
-      return deposit;
+    return depositRepository.update(id, data);
+  },
+
+  async deleteDeposit(id: string) {
+    const deposit = await depositRepository.findById(id);
+    if (!deposit) {
+      throw new AppError(404, 'Deposit not found');
     }
-    return depositRepository.void(id);
+    await depositRepository.delete(id);
   },
 };

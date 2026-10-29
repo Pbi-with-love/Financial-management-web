@@ -5,6 +5,7 @@ const router = Router();
 
 router.get('/', depositController.list);
 router.post('/', depositController.create);
-router.post('/:id/void', depositController.void);
+router.patch('/:id', depositController.update);
+router.delete('/:id', depositController.remove);
 
 export default router;

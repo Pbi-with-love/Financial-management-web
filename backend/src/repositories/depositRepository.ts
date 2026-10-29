@@ -63,11 +63,19 @@ export const depositRepository = {
     });
   },
 
-  async void(id: string) {
+  async update(id: string, data: { amountCents?: number; date?: string; note?: string }) {
+    const updateData: Record<string, unknown> = {};
+    if (data.amountCents !== undefined) updateData.amountCents = data.amountCents;
+    if (data.date !== undefined) updateData.date = new Date(data.date);
+    if (data.note !== undefined) updateData.note = data.note;
     return prisma.deposit.update({
       where: { id },
-      data: { voided: true, voidedAt: new Date() },
+      data: updateData,
       include: depositInclude,
     });
+  },
+
+  async delete(id: string) {
+    return prisma.deposit.delete({ where: { id } });
   },
 };

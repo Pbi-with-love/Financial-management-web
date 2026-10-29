@@ -134,10 +134,26 @@ export function createDeposit(payload: CreateDepositPayload): Promise<Deposit> {
   });
 }
 
-export function voidDeposit(id: string): Promise<Deposit> {
-  return request<Deposit>(`/deposits/${id}/void`, {
-    method: 'POST',
+export function updateDeposit(id: string, data: { amountCents?: number; date?: string; note?: string }): Promise<Deposit> {
+  return request<Deposit>(`/deposits/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
   });
+}
+
+export async function deleteDeposit(id: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}/deposits/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    let message = `API error: ${response.status}`;
+    try {
+      const body = (await response.json()) as { error?: string };
+      if (body.error) message = body.error;
+    } catch { /* ignore */ }
+    throw new Error(message);
+  }
 }
 
 export async function updateItemShare(id: string, amountCents: number): Promise<unknown> {

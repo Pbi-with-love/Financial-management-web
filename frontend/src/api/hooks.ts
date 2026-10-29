@@ -7,21 +7,25 @@ import {
   createDeposit,
   createExpense,
   getDeposits,
+  getExpense,
   getExpenses,
   getMember,
   getMembers,
   getRecentExpenses,
+  reviseExpense,
   voidDeposit,
   voidExpense,
 } from './client';
+import type { DepositFilters, ExpenseFilters } from './client';
 import type { CreateDepositPayload, CreateExpensePayload } from './types';
 
 export const queryKeys = {
   members: ['members'] as const,
   member: (id: string) => ['members', id] as const,
-  expenses: ['expenses'] as const,
+  expenses: (filters?: ExpenseFilters) => ['expenses', filters] as const,
+  expense: (id: string) => ['expenses', id] as const,
   recentExpenses: (limit?: number) => ['expenses', 'recent', limit] as const,
-  deposits: ['deposits'] as const,
+  deposits: (filters?: DepositFilters) => ['deposits', filters] as const,
 };
 
 export function useMembers() {
@@ -38,10 +42,18 @@ export function useMember(id: string) {
   });
 }
 
-export function useExpenses() {
+export function useExpenses(filters?: ExpenseFilters) {
   return useQuery({
-    queryKey: queryKeys.expenses,
-    queryFn: getExpenses,
+    queryKey: queryKeys.expenses(filters),
+    queryFn: () => getExpenses(filters),
+  });
+}
+
+export function useExpense(id: string) {
+  return useQuery({
+    queryKey: queryKeys.expense(id),
+    queryFn: () => getExpense(id),
+    enabled: !!id,
   });
 }
 
@@ -52,10 +64,10 @@ export function useRecentExpenses(limit?: number) {
   });
 }
 
-export function useDeposits() {
+export function useDeposits(filters?: DepositFilters) {
   return useQuery({
-    queryKey: queryKeys.deposits,
-    queryFn: getDeposits,
+    queryKey: queryKeys.deposits(filters),
+    queryFn: () => getDeposits(filters),
   });
 }
 
@@ -64,7 +76,7 @@ export function useCreateExpense() {
   return useMutation({
     mutationFn: (payload: CreateExpensePayload) => createExpense(payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.expenses });
+      void queryClient.invalidateQueries({ queryKey: ['expenses'] });
       void queryClient.invalidateQueries({ queryKey: queryKeys.members });
     },
   });
@@ -75,7 +87,7 @@ export function useVoidExpense() {
   return useMutation({
     mutationFn: (id: string) => voidExpense(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.expenses });
+      void queryClient.invalidateQueries({ queryKey: ['expenses'] });
       void queryClient.invalidateQueries({ queryKey: queryKeys.members });
     },
   });
@@ -86,7 +98,7 @@ export function useCreateDeposit() {
   return useMutation({
     mutationFn: (payload: CreateDepositPayload) => createDeposit(payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.deposits });
+      void queryClient.invalidateQueries({ queryKey: ['deposits'] });
       void queryClient.invalidateQueries({ queryKey: queryKeys.members });
     },
   });
@@ -97,7 +109,19 @@ export function useVoidDeposit() {
   return useMutation({
     mutationFn: (id: string) => voidDeposit(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.deposits });
+      void queryClient.invalidateQueries({ queryKey: ['deposits'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.members });
+    },
+  });
+}
+
+export function useReviseExpense() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, items }: { id: string; items: Parameters<typeof reviseExpense>[1] }) =>
+      reviseExpense(id, items),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expenses'] });
       void queryClient.invalidateQueries({ queryKey: queryKeys.members });
     },
   });

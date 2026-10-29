@@ -140,6 +140,28 @@ export function voidDeposit(id: string): Promise<Deposit> {
   });
 }
 
+export async function updateItemShare(id: string, amountCents: number): Promise<unknown> {
+  return request(`/item-shares/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ amountCents }),
+  });
+}
+
+export async function deleteItemShare(id: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}/item-shares/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    let message = `API error: ${response.status}`;
+    try {
+      const body = (await response.json()) as { error?: string };
+      if (body.error) message = body.error;
+    } catch { /* ignore */ }
+    throw new Error(message);
+  }
+}
+
 export async function reviseExpense(id: string, items: CreateExpensePayload['items']): Promise<Expense> {
   return request('/expenses/' + id + '/revise', { method: 'PUT', body: JSON.stringify({ items }) });
 }

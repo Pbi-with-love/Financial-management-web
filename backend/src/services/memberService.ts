@@ -31,10 +31,13 @@ export const memberService = {
     if (!member) {
       throw new AppError(404, 'Member not found');
     }
-    const hasRecords = await memberRepository.hasFinancialRecords(id);
-    if (hasRecords) {
-      throw new AppError(400, 'Cannot delete member with existing deposits or expenses. Deactivate instead.');
+    const hasShares = await memberRepository.hasItemShares(id);
+    if (hasShares) {
+      throw new AppError(400, 'Cannot delete member with existing item shares. Remove their shares first.');
     }
+    // Delete any deposits by this member first (cascade)
+    const { prisma } = await import('../app.js');
+    await prisma.deposit.deleteMany({ where: { memberId: id } });
     await memberRepository.delete(id);
   },
 };

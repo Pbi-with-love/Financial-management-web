@@ -15,6 +15,8 @@ import {
   getRecentExpenses,
   reviseExpense,
   deleteMember,
+  deleteItemShare,
+  updateItemShare,
   updateMember,
   voidDeposit,
   voidExpense,
@@ -126,6 +128,29 @@ export function useUpdateMember() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.members });
       void queryClient.invalidateQueries({ queryKey: ['members'] });
+    },
+  });
+}
+
+export function useUpdateItemShare() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, amountCents }: { id: string; amountCents: number }) =>
+      updateItemShare(id, amountCents),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.members });
+    },
+  });
+}
+
+export function useDeleteItemShare() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteItemShare(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.members });
     },
   });
 }

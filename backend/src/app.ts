@@ -5,6 +5,7 @@ import { errorHandler } from './errors/errorHandler.js';
 import memberRoutes from './routes/memberRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
 import depositRoutes from './routes/depositRoutes.js';
+import itemShareRoutes from './routes/itemShareRoutes.js';
 
 export const prisma = new PrismaClient();
 
@@ -33,6 +34,7 @@ export function createApp(): express.Application {
   app.use('/members', memberRoutes);
   app.use('/expenses', expenseRoutes);
   app.use('/deposits', depositRoutes);
+  app.use('/item-shares', itemShareRoutes);
 
   app.use(errorHandler);
 

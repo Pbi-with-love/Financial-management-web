@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { useMember, useDeposits, useExpenses, useVoidDeposit, useUpdateMember, useDeleteMember } from '../api/hooks'
+import { useMember, useDeposits, useExpenses, useVoidDeposit, useUpdateMember, useDeleteMember, useUpdateItemShare, useDeleteItemShare } from '../api/hooks'
 import { formatCents } from '../lib/format'
 import { Card, CardContent } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
@@ -11,16 +11,95 @@ import type { Deposit, ItemShare, Item, Expense } from '../api/types'
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr)
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 interface EnrichedItemShare extends ItemShare {
   item: Item
   expense: Expense
+}
+
+function ItemShareRow({
+  share,
+}: {
+  share: EnrichedItemShare
+}) {
+  const [editing, setEditing] = useState(false)
+  const [amountInput, setAmountInput] = useState('')
+  const updateShare = useUpdateItemShare()
+  const deleteShare = useDeleteItemShare()
+
+  return (
+    <li className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border last:border-0">
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <span className="text-sm font-medium text-foreground truncate">
+          {share.item.description}
+        </span>
+        <span className="text-xs text-muted-foreground truncate">
+          {share.expense.title} · {formatDate(share.expense.date)}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {editing ? (
+          <>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={amountInput}
+              onChange={(e) => setAmountInput(e.target.value)}
+              className="h-8 w-20 text-right tabular-nums border border-border rounded-md px-2 text-sm bg-background"
+              autoFocus
+            />
+            <Button
+              size="sm"
+              disabled={updateShare.isPending}
+              onClick={() => {
+                const cents = Math.round(parseFloat(amountInput) * 100)
+                if (cents > 0) {
+                  updateShare.mutate({ id: share.id, amountCents: cents }, {
+                    onSuccess: () => setEditing(false),
+                  })
+                }
+              }}
+            >
+              {updateShare.isPending ? '…' : 'Save'}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <>
+            <span className="text-sm font-medium text-foreground tabular-nums">
+              {formatCents(share.amountCents)}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              onClick={() => { setAmountInput((share.amountCents / 100).toFixed(2)); setEditing(true) }}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-destructive"
+              disabled={deleteShare.isPending}
+              onClick={() => {
+                if (window.confirm('Remove this share? This will change the member\'s balance.')) {
+                  deleteShare.mutate(share.id)
+                }
+              }}
+            >
+              {deleteShare.isPending ? '…' : 'Remove'}
+            </Button>
+          </>
+        )}
+      </div>
+    </li>
+  )
 }
 
 export default function MemberDetail() {
@@ -81,16 +160,12 @@ export default function MemberDetail() {
     )
   }
 
-  if (!member) {
-    return null
-  }
+  if (!member) return null
 
-  // Filter deposits for this member
   const memberDeposits: Deposit[] = (allDeposits ?? []).filter(
     (d) => d.memberId === id
   )
 
-  // Extract item shares for this member from all expenses
   const memberItemShares: EnrichedItemShare[] = []
   for (const expense of allExpenses ?? []) {
     for (const item of expense.items) {
@@ -103,10 +178,10 @@ export default function MemberDetail() {
   }
 
   const balancePositive = member.balanceCents >= 0
+  const hasShares = memberItemShares.length > 0
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-6">
-      {/* Back button */}
       <Button
         variant="ghost"
         size="sm"
@@ -165,9 +240,6 @@ export default function MemberDetail() {
                 </Button>
               </div>
             )}
-            {!member.active && (
-              <span className="mt-1 text-sm text-muted-foreground">(Inactive)</span>
-            )}
           </div>
           <div className="text-left sm:text-right">
             <p className="text-xs text-muted-foreground mb-0.5 font-medium uppercase tracking-wide">
@@ -183,12 +255,16 @@ export default function MemberDetail() {
           </div>
         </div>
 
-        {/* Delete member (hard delete — only if no financial records) */}
-        <div className="mt-4 pt-4 border-t border-border flex justify-end">
+        {/* Delete member — disabled if has shares */}
+        <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+          {hasShares && (
+            <p className="text-xs text-muted-foreground">Remove all shares before deleting</p>
+          )}
+          {!hasShares && <div />}
           <Button
             variant="destructive"
             size="sm"
-            disabled={deleteMemberMutation.isPending}
+            disabled={deleteMemberMutation.isPending || hasShares}
             onClick={() => {
               if (window.confirm(`Delete ${member.name}? This cannot be undone.`)) {
                 deleteMemberMutation.mutate(id!, {
@@ -211,29 +287,22 @@ export default function MemberDetail() {
           <TabsTrigger value="deposits" className="flex-1">
             Deposits
             {memberDeposits.length > 0 && (
-              <span className="ml-1.5 text-xs text-muted-foreground">
-                ({memberDeposits.length})
-              </span>
+              <span className="ml-1.5 text-xs text-muted-foreground">({memberDeposits.length})</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="shares" className="flex-1">
             Item Shares
             {memberItemShares.length > 0 && (
-              <span className="ml-1.5 text-xs text-muted-foreground">
-                ({memberItemShares.length})
-              </span>
+              <span className="ml-1.5 text-xs text-muted-foreground">({memberItemShares.length})</span>
             )}
           </TabsTrigger>
         </TabsList>
 
-        {/* Deposits tab */}
         <TabsContent value="deposits">
           <Card>
             <CardContent className="px-0">
               {memberDeposits.length === 0 ? (
-                <p className="py-10 text-center text-muted-foreground">
-                  No deposits yet.
-                </p>
+                <p className="py-10 text-center text-muted-foreground">No deposits yet.</p>
               ) : (
                 <ul>
                   {memberDeposits.map((deposit) => (
@@ -248,14 +317,10 @@ export default function MemberDetail() {
                           <span className="text-sm font-medium text-foreground tabular-nums">
                             {formatCents(deposit.amountCents)}
                           </span>
-                          {deposit.voided && (
-                            <Badge variant="destructive">Voided</Badge>
-                          )}
+                          {deposit.voided && <Badge variant="destructive">Voided</Badge>}
                         </div>
                         {deposit.note && (
-                          <span className="text-xs text-muted-foreground truncate">
-                            {deposit.note}
-                          </span>
+                          <span className="text-xs text-muted-foreground truncate">{deposit.note}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
@@ -269,12 +334,12 @@ export default function MemberDetail() {
                             className="text-destructive hover:text-destructive"
                             disabled={voidDeposit.isPending}
                             onClick={() => {
-                              if (window.confirm('Are you sure you want to void this deposit?')) {
+                              if (window.confirm('Void this deposit?')) {
                                 voidDeposit.mutate(deposit.id)
                               }
                             }}
                           >
-                            {voidDeposit.isPending ? 'Voiding...' : 'Void'}
+                            Void
                           </Button>
                         )}
                       </div>
@@ -286,38 +351,15 @@ export default function MemberDetail() {
           </Card>
         </TabsContent>
 
-        {/* Item shares tab */}
         <TabsContent value="shares">
           <Card>
             <CardContent className="px-0">
               {memberItemShares.length === 0 ? (
-                <p className="py-10 text-center text-muted-foreground">
-                  No shares yet.
-                </p>
+                <p className="py-10 text-center text-muted-foreground">No shares yet.</p>
               ) : (
                 <ul>
                   {memberItemShares.map((share) => (
-                    <li
-                      key={share.id}
-                      className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border last:border-0"
-                    >
-                      <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="text-sm font-medium text-foreground truncate">
-                          {share.item.description}
-                        </span>
-                        <span className="text-xs text-muted-foreground truncate">
-                          {share.expense.title}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-end gap-0.5 shrink-0">
-                        <span className="text-sm font-medium text-foreground tabular-nums">
-                          {formatCents(share.amountCents)}
-                        </span>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatDate(share.expense.date)}
-                        </span>
-                      </div>
-                    </li>
+                    <ItemShareRow key={share.id} share={share} />
                   ))}
                 </ul>
               )}
